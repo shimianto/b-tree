@@ -1,11 +1,13 @@
 //
 //  b_tree.h
-//  TP1
+//  b-tree_xcode
 //
-//  Created by Arthur Senna on 2016-04-24.
-//  Copyright © 2016 Arthur Senna. All rights reserved.
+//  Created by Arthur Senna on 2020-04-22.
+//  Copyright © 2020 Arthur Senna. All rights reserved.
 //
 
+#ifndef b_tree_h
+#define b_tree_h
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,38 +19,49 @@ typedef struct Register{
 }Register;
 
 typedef struct Node{
-    int name;
+    long id;
+    long parendId;
+
     int numKeys;
-    int parendNode;
-    bool hasChildNode;
-	int leafId;
-	int numRegStored;
+    int numChildren;
+
+    bool isLeafNode;
+    long leafId;
+
+    int numRecords;
+    int treeOrder;
 
     unsigned long long int *registerKeys;
-    int *nextNodes;
-
-    // int leaf;
-    // int numRegLeaf;
-    
-    // unsigned long long int *r;
-    
-    // int next[MAX_PAG+1];
-    // int *next;
+    long *childNodes;
 }Node;
 
 // Init Functions
-Node initNode(int leafId);
+Node initNode(Node oldNode);
+Node initRootNode(int numRecords, int treeOrder);
 
 //Tree functions
+//Read
 Register readRegister(FILE* inputFile, int numRecords);
-void freeRegister(Register r, int numRecords);
-void sortNodeRegisters(Node *node);
-void insertRegisterKeyIntoNode(Node *node, Register reg);
+Register *readRegistersFromLeaf(FILE *file, Node *leaf);
+Node getNode(long nodeId);
+
+// Store functions
 void storeRegisterOnLeaf(FILE* file, int numRecords, Register regist);
-void storeLeafNode(Register newRegist, int numRecords, Node *leaf, int treeOrder);
+void storeLeafNode(Register newRegist, Node leaf);
+void storeNode(Node node);
 
-
+// Insert functions
+void insertRegisterKeyIntoNode(Node *node, unsigned long long int regKey);
+void insertChildKeyIntoNode(Node *node, long nodeId);
+void insertRegisterIntoTree(Register regst, Node *node, long *newLeafId, long *newNodeId);
+void insertRegisterIntoNode(Node *node, Register regst, long *newLeafId, long *newNodeId);
+void splitNode(Node *node, long *newLeafId, long *newNodeId);
 
 // Auxiliar functions
 char *readInputString(FILE* fp, int size);
-char *getFileName(int id);
+char *getFileName(long id, bool isLeafNode);
+void freeRegister(Register r, int numRecords);
+void sortNodeRegisters(Node *node);
+
+
+#endif /* b_tree_h */

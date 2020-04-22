@@ -2,3 +2,6 @@
 *.o
 /*.txt
 *~
+/test.c
+/a.out
+b-tree_xcode
