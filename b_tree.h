@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "queue.h"
 
 typedef struct Register{
     unsigned long long int key;
@@ -28,7 +29,7 @@ typedef struct Node{
     bool isLeafNode;
     long leafId;
 
-    int numRecords;
+    int recordSize;
     int treeOrder;
 
     unsigned long long int *registerKeys;
@@ -37,16 +38,17 @@ typedef struct Node{
 
 // Init Functions
 Node initNode(Node oldNode);
-Node initRootNode(int numRecords, int treeOrder);
+Node initRootNode(int recordSize, int treeOrder);
 
 //Tree functions
 //Read
-Register readRegister(FILE* inputFile, int numRecords);
-Register *readRegistersFromLeaf(FILE *file, Node *leaf);
+Register readRegister(FILE* inputFile, int recordSize);
+Register *readRegistersFromLeafFile(FILE *file, Node leaf);
 Node getNode(long nodeId);
+Register getRegisterFromLeaf(unsigned long long int rKey, Node leafNode);
 
 // Store functions
-void storeRegisterOnLeaf(FILE* file, int numRecords, Register regist);
+void storeRegisterOnFile(FILE* file, int recordSize, Register regist);
 void storeLeafNode(Register newRegist, Node leaf);
 void storeNode(Node node);
 
@@ -56,12 +58,18 @@ void insertChildKeyIntoNode(Node *node, long nodeId);
 void insertRegisterIntoTree(Register regst, Node *node, long *newLeafId, long *newNodeId);
 void insertRegisterIntoNode(Node *node, Register regst, long *newLeafId, long *newNodeId);
 void splitNode(Node *node, long *newLeafId, long *newNodeId);
+void printRegisterOnFile(FILE *outputFile, Register r, int recordSize);
+
+// Search functions
+Register searchRegisterInTree(unsigned long long int regstKey, Node node);
+void dump(FILE *outputFile, long rootId, long numNodes);
 
 // Auxiliar functions
 char *readInputString(FILE* fp, int size);
 char *getFileName(long id, bool isLeafNode);
-void freeRegister(Register r, int numRecords);
+void freeRegister(Register r, int recordSize);
 void sortNodeRegisters(Node *node);
+void sortNodesChildren(Node *node);
 
 
 #endif /* b_tree_h */

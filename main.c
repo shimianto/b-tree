@@ -9,14 +9,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
 #include "b_tree.h"
-
+#include "queue.h"
 
 int main(int argc, const char * argv[]){
 
     FILE *outputFile, *inputFile;
-    int treeOrder, numRecords;
+    int treeOrder, recordSize;
     long newNodeId = 0, newLeafId = 0;
     char *operation;
     char c;
@@ -25,39 +24,46 @@ int main(int argc, const char * argv[]){
 
     // Gets output file
     outputFile=fopen(argv[1], "w");
-    fclose(outputFile);
 
     // Opens input file
     inputFile=fopen(argv[2], "r");
 
     // Gets tree order and the number of records per register
     treeOrder=atoi(argv[3]);
-    numRecords=atoi(argv[4])-1; // Minus the key
+    recordSize=atoi(argv[4])-1; // Minus the key
 
     // Init root node
-    root = initRootNode(numRecords, treeOrder);
+    root = initRootNode(recordSize, treeOrder);
 
     // Get first operation
     operation = readInputString(inputFile, 5);
 
     while(operation[0] == 'a' || operation[0] == 's' || operation[0] == 'd'){
         if(operation[0] == 'a'){
-            Register newRegister;
-            newRegister = readRegister(inputFile, root.numRecords);
-
+            Register newRegister = readRegister(inputFile, root.recordSize);
             insertRegisterIntoTree(newRegister, &root, &newLeafId, &newNodeId);
-
-            freeRegister(newRegister, root.numRecords);
+            freeRegister(newRegister, root.recordSize);
+            
+            // Update root
+            root = getNode(root.id);
         }
-        else if (operation[0]=='s')
+        else if (operation[0] == 's')
         {
+            Register readRegister;
             // Get key from register to be searchef
             fscanf(inputFile, "%lld%c",&searchKey,&c);
-
+            readRegister = searchRegisterInTree(searchKey, root);
+            
+            printRegisterOnFile(outputFile, readRegister, recordSize);
+        }
+        else if (operation[0] == 'd'){
+            fprintf(outputFile, "dump\n");
+            dump(outputFile, root.id, newNodeId+1);
+            fprintf(outputFile, "dump\n");
         }
         else
         {
-            printf("Unidentified operation: '%s'. Ending procedure.\n", operation);
+            printf("Unidentified operation: '%s'.\n", operation);
         }
 
         free(operation);
@@ -67,5 +73,6 @@ int main(int argc, const char * argv[]){
     free(operation);
 
     fclose(inputFile);
+    fclose(outputFile);
     return 0;
 }

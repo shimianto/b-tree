@@ -10,10 +10,10 @@ CFLAGS = -g -O0
 # exemplificar um makefile com dois executaveis
 all: main.exe
 
-main.exe: main.o b_tree.o
-	$(CC) $(CFLAGS) main.o b_tree.o -o main.exe
+main.exe: main.o b_tree.o queue.o
+	$(CC) $(CFLAGS) main.o b_tree.o queue.o -o main.exe
 
-main.o: main.c b_tree.h
+main.o: main.c b_tree.h queue.h
 	$(CC) $(CFLAGS) -c main.c
 
 # fazer as regras multiplicador e somador dependerem de operacoes.o 
@@ -21,6 +21,9 @@ main.o: main.c b_tree.h
 
 b_tree.o: b_tree.h b_tree.c
 	$(CC) $(CFLAGS) -c b_tree.c 
+
+queue.o: queue.h queue.c
+	$(CC) $(CFLAGS) -c queue.c 
 
 # essa regra limpa os arquivos gerados durante todas as compilacoes.
 # rm e um comando linux para apagar arquivos definitivamente. tome 
