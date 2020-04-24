@@ -1,7 +1,6 @@
 .DS_Store
-*.o
+/*.o
 /*.txt
 *~
-/test.c
-/a.out
+/*.html
 #b-tree_xcode
