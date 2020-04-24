@@ -12,6 +12,23 @@
 #include "b_tree.h"
 #include "queue.h"
 
+void dropDatabase(long numNodes, long numLeafs){
+    remove("root.txt");
+    
+    for (int i=0; i<numLeafs; ++i) {
+        char *fileName = getFileName(i, true);
+        remove(fileName);
+        free(fileName);
+    }
+    
+    for (int i=0; i<numNodes; ++i) {
+        char *fileName = getFileName(i, false);
+        remove(fileName);
+        free(fileName);
+    }
+    
+}
+
 int main(int argc, const char * argv[]){
 
     FILE *outputFile, *inputFile;
@@ -34,18 +51,21 @@ int main(int argc, const char * argv[]){
 
     // Init root node
     root = initRootNode(recordSize, treeOrder);
+    updatesRootId(root.id);
 
     // Get first operation
     operation = readInputString(inputFile, 5);
 
     while(operation[0] == 'a' || operation[0] == 's' || operation[0] == 'd'){
         if(operation[0] == 'a'){
+            // Gets register and insert it into tree
             Register newRegister = readRegister(inputFile, root.recordSize);
             insertRegisterIntoTree(newRegister, &root, &newLeafId, &newNodeId);
             freeRegister(newRegister, root.recordSize);
             
-            // Update root
-            root = getNode(root.id);
+            // Updates root
+            long rootId = getRootId();
+            root = getNode(rootId);
         }
         else if (operation[0] == 's')
         {
@@ -55,6 +75,8 @@ int main(int argc, const char * argv[]){
             readRegister = searchRegisterInTree(searchKey, root);
             
             printRegisterOnFile(outputFile, readRegister, recordSize);
+            
+            freeRegister(readRegister, recordSize);
         }
         else if (operation[0] == 'd'){
             fprintf(outputFile, "dump\n");
@@ -74,5 +96,8 @@ int main(int argc, const char * argv[]){
 
     fclose(inputFile);
     fclose(outputFile);
+    
+    dropDatabase(newNodeId+1, newLeafId+1);
+    
     return 0;
 }

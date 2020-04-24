@@ -16,6 +16,7 @@
 
 typedef struct Register{
     unsigned long long int key;
+    bool hasRecords;
     char **records;
 }Register;
 
@@ -39,6 +40,8 @@ typedef struct Node{
 // Init Functions
 Node initNode(Node oldNode);
 Node initRootNode(int recordSize, int treeOrder);
+void updatesRootId(long newId);
+long getRootId(void);
 
 //Tree functions
 //Read
@@ -68,6 +71,7 @@ void dump(FILE *outputFile, long rootId, long numNodes);
 char *readInputString(FILE* fp, int size);
 char *getFileName(long id, bool isLeafNode);
 void freeRegister(Register r, int recordSize);
+void freeNode(Node *node);
 void sortNodeRegisters(Node *node);
 void sortNodesChildren(Node *node);
 

@@ -42,15 +42,35 @@ Node initRootNode(int recordSize, int treeOrder){
     };
     return node;
 }
+
+void updatesRootId(long newId){
+    FILE *rootFile;
+    
+    rootFile = fopen("root.txt", "w");
+    fprintf(rootFile, "%ld", newId);
+    fclose(rootFile);
+}
+
+long getRootId(void){
+    FILE *rootFile;
+    long rootId;
+    
+    rootFile = fopen("root.txt", "r");
+    fscanf(rootFile, "%ld", &rootId);
+    fclose(rootFile);
+    
+    return rootId;
+}
 //Tree functions
 //Read functions
 Register readRegister(FILE* inputFile, int recordSize){
-    Register newRegister;
+    Register newRegister = {.key = -1};
 
     // Gets register's key and skip tab or newline char
     fscanf(inputFile, "%lld\t",&newRegister.key);
 
     newRegister.records = realloc(NULL, sizeof(char*)*recordSize);
+    newRegister.hasRecords = true;
 
     for (int i = 0; i < recordSize; ++i)
     {
@@ -112,12 +132,13 @@ Node getNode(long nodeId)
 Register getRegisterFromLeaf(unsigned long long int rKey, Node leafNode){
     FILE *leafFile;
     Register r = {.key = -1}, *leafRegisters;
+    char *fileName = getFileName(leafNode.leafId, true);
     
-    leafFile = fopen(getFileName(leafNode.id, true), "r");
+    leafFile = fopen(fileName, "r");
     
     leafRegisters = readRegistersFromLeafFile(leafFile, leafNode);
     
-    for (int i = 0; ; ++i) {
+    for (int i = 0; i < leafNode.numKeys; ++i) {
         if (leafRegisters[i].key == rKey) {
             r = leafRegisters[i];
             break;
@@ -125,6 +146,8 @@ Register getRegisterFromLeaf(unsigned long long int rKey, Node leafNode){
     }
     
     fclose(leafFile);
+    free(fileName);
+    free(leafRegisters);
     return r;
 }
 
@@ -258,6 +281,7 @@ void insertRegisterIntoTree(Register regst, Node *node, long *newLeafId, long *n
 
     childNode = getNode(node->childNodes[k]);
     insertRegisterIntoTree(regst, &childNode, newLeafId, newNodeId);
+    freeNode(&childNode);
 }
 
 void insertRegisterIntoNode(Node *node, Register regst, long *newLeafId, long *newNodeId){
@@ -281,7 +305,7 @@ void splitNode(Node *node, long *newLeafId, long *newNodeId){
     
     rightNode.id = ++*newNodeId;
 
-    breakPoint = node->numKeys/2; // + node->numKeys%2;
+    breakPoint = node->numKeys/2 + node->numKeys%2;
 
     // Insert registers into correct node
     for (int i = 0; i < node->numKeys; ++i)
@@ -295,23 +319,44 @@ void splitNode(Node *node, long *newLeafId, long *newNodeId){
             insertRegisterKeyIntoNode(&rightNode, node->registerKeys[i]);
         }
     }
+    
+    for (int i = 0; i < node->numChildren; ++i)
+    {
+        if (i < breakPoint)
+        {
+            insertChildKeyIntoNode(&leftNode, node->childNodes[i]);
+        }
+        else if (i == breakPoint){
+            insertChildKeyIntoNode(&leftNode, node->childNodes[i]);
+            insertChildKeyIntoNode(&rightNode, node->childNodes[i]);
+        }
+        else
+        {
+            insertChildKeyIntoNode(&rightNode, node->childNodes[i]);
+        }
+    }
 
     // If leaf node stores in memory
     if (node->isLeafNode)
     {
         Register *leafRegisters;
         FILE *nodeFile, *leftNodeFile, *rightNodeFile;
-
+        char *nodeFileName, *leftNodeFileName, *rightNodeFileName;
+        
         // Update nodes
         rightNode.leafId = ++*newLeafId;
+        
+        nodeFileName = getFileName(node->leafId, true);
+        leftNodeFileName = getFileName(leftNode.leafId, true);
+        rightNodeFileName = getFileName(rightNode.leafId, true);
 
         // Get registers current stored
-        nodeFile = fopen(getFileName(node->leafId, true), "r");
+        nodeFile = fopen(nodeFileName, "r");
         leafRegisters = readRegistersFromLeafFile(nodeFile, *node);
         fclose(nodeFile);
 
-        leftNodeFile = fopen(getFileName(leftNode.leafId, true),"w");
-        rightNodeFile = fopen(getFileName(rightNode.leafId, true),"w");
+        leftNodeFile = fopen(leftNodeFileName,"w");
+        rightNodeFile = fopen(rightNodeFileName,"w");
 
         for (int i = 0; i < node->numKeys; ++i)
         {
@@ -328,6 +373,17 @@ void splitNode(Node *node, long *newLeafId, long *newNodeId){
         fclose(leftNodeFile);
         fclose(rightNodeFile);
         free(leafRegisters);
+        free(nodeFileName);
+        free(leftNodeFileName);
+        free(rightNodeFileName);
+    }
+    else{
+        for (int i = 0; i < rightNode.numChildren; i++) {
+            Node childNode = getNode(rightNode.childNodes[i]);
+            childNode.parendId = rightNode.id;
+            storeNode(childNode);
+            freeNode(&childNode);
+        }
     }
 
     // Update parent node
@@ -336,10 +392,7 @@ void splitNode(Node *node, long *newLeafId, long *newNodeId){
     {
         node->id = ++*newNodeId;
         
-        node->numKeys = 0;
-        node->numChildren = 0;
-        free(node->registerKeys);
-        free(node->childNodes);
+        freeNode(node);
         
         node->isLeafNode = false;
         node->leafId = -1;
@@ -356,6 +409,7 @@ void splitNode(Node *node, long *newLeafId, long *newNodeId){
 
         sortNodesChildren(node);
         storeNode(*node);
+        updatesRootId(node->id);
     }
     else
     {
@@ -368,17 +422,17 @@ void splitNode(Node *node, long *newLeafId, long *newNodeId){
         storeNode(rightNode);
         
         sortNodesChildren(&parentNode);
+        storeNode(parentNode);
 
         // Stores or split parent node
         if (parentNode.numKeys > parentNode.treeOrder)
         {
             splitNode(&parentNode, newLeafId, newNodeId);
         }
-        else
-        {
-            storeNode(parentNode);
-        }
     }
+    
+    freeNode(&leftNode);
+    freeNode(&rightNode);
 }
 
 void printRegisterOnFile(FILE *outputFile, Register r, int recordSize){
@@ -512,11 +566,20 @@ char *getFileName(long id, bool isLeafNode){
 }
 
 void freeRegister(Register r, int recordSize){
-    for (int i = 0; i < recordSize; ++i)
-    {
-        free(r.records[i]);
+    if (r.hasRecords) {
+        for (int i = 0; i < recordSize; ++i)
+        {
+            free(r.records[i]);
+        }
     }
     free(r.records);
+}
+
+void freeNode(Node *node){
+    free(node->childNodes);
+    free(node->registerKeys);
+    node->numChildren = 0;
+    node->numKeys = 0;
 }
 
 void sortNodeRegisters(Node *node){
@@ -539,9 +602,10 @@ void sortNodesChildren(Node *node){
         return;
     }
     // Get all child nodes
-    Node *childrenNodes = realloc(NULL, sizeof(node)*node->numChildren);
-    for (int i = 0; i < node->numChildren; ++i) {
-        childrenNodes[i] = getNode(node->childNodes[i]);
+    Node *childrenNodes = realloc(NULL, sizeof(Node)*node->numChildren);
+    for (int k = 0; k < node->numChildren; ++k) {
+        Node n = getNode(node->childNodes[k]);
+        childrenNodes[k] = n;
     }
     // Sort child nodes
     for(int i = 0;i<node->numChildren;i++){
@@ -551,10 +615,10 @@ void sortNodesChildren(Node *node){
             if (childrenNodes[i].registerKeys[0] > childrenNodes[j].registerKeys[0]) {
                 aux = childrenNodes[i];
                 auxId = node->childNodes[i];
-                
+
                 childrenNodes[i] = childrenNodes[j];
                 node->childNodes[i] = node->childNodes[j];
-                
+
                 childrenNodes[j] = aux;
                 node->childNodes[j] = auxId;
             }
