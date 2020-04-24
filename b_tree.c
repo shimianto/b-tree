@@ -627,3 +627,19 @@ void sortNodesChildren(Node *node){
     free(childrenNodes);
 }
 
+void dropDatabase(long numNodes, long numLeafs){
+    remove("root.txt");
+    
+    for (int i=0; i<numLeafs; ++i) {
+        char *fileName = getFileName(i, true);
+        remove(fileName);
+        free(fileName);
+    }
+    
+    for (int i=0; i<numNodes; ++i) {
+        char *fileName = getFileName(i, false);
+        remove(fileName);
+        free(fileName);
+    }
+    
+}

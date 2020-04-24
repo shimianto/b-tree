@@ -13,12 +13,12 @@ no mínimo (teto(m/2) - 1) chaves.
 
 Para testar o seu programa, use as linhas de comando abaixo:
 
-./main.exe ./my_answers/test1_myanswer.txt ./testes_toy/test1.txt 4 5 0 
+./main.exe ./my_answers/test1_myanswer.txt ./testes_toy/test1.txt 4 5 0
 ./main.exe ./my_answers/test2_myanswer.txt ./testes_toy/test2.txt 5 10 0
 ./main.exe ./my_answers/test3_myanswer.txt ./testes_toy/test3.txt 4 3 0 
-./main.exe ./my_answers/test4_myanswer.txt ./testes_toy/test4.txt 6 3 0 
+./main.exe ./my_answers/test4_myanswer.txt ./testes_toy/test4.txt 6 3 0
 ./main.exe ./my_answers/test5_myanswer.txt ./testes_toy/test5.txt 4 3 0 
-./main.exe ./my_answers/test6_myanswer.txt ./testes_toy/test6.txt 7 3 0 
+./main.exe ./my_answers/test6_myanswer.txt ./testes_toy/test6.txt 7 3 0
 
 ou
 

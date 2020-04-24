@@ -74,6 +74,7 @@ void freeRegister(Register r, int recordSize);
 void freeNode(Node *node);
 void sortNodeRegisters(Node *node);
 void sortNodesChildren(Node *node);
+void dropDatabase(long numNodes, long numLeafs);
 
 
 #endif /* b_tree_h */
